@@ -17,6 +17,14 @@ export default function MatchesScreen() {
     },
   });
 
+  const { data: slate, isLoading: isSlateLoading } = useQuery({
+    queryKey: ['slate'],
+    queryFn: async () => {
+      const res = await apiClient.get('/api/sports/slate');
+      return res.data?.matches || [];
+    },
+  });
+
   const handleSearch = () => {
     if (search.trim()) {
       router.push({ pathname: '/chat', params: { query: search } });
@@ -45,11 +53,11 @@ export default function MatchesScreen() {
         </Text>
 
         {isLoading ? (
-          <ActivityIndicator color="#10b981" className="mt-4" />
+          <ActivityIndicator color="#10b981" className="mt-4 mb-8" />
         ) : featured ? (
           <TouchableOpacity 
-            className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
-            onPress={() => router.push({ pathname: '/chat', params: { query: featured.prompt } })}
+            className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 mb-8"
+            onPress={() => router.push({ pathname: '/chat', params: { query: featured.prompt, featuredMatch: JSON.stringify(featured) } })}
           >
             <View className="flex-row justify-between mb-4">
               <Text className="text-emerald-400 text-sm font-bold">{featured.tournament}</Text>
@@ -62,7 +70,28 @@ export default function MatchesScreen() {
             </View>
           </TouchableOpacity>
         ) : (
-          <Text className="text-zinc-500">No featured matches available right now.</Text>
+          <Text className="text-zinc-500 mb-8">No featured matches available right now.</Text>
+        )}
+
+        <Text className="text-white text-xl font-bold mb-4">Upcoming Matches</Text>
+        {isSlateLoading ? (
+          <ActivityIndicator color="#10b981" className="mt-4" />
+        ) : slate && slate.length > 0 ? (
+          slate.map((match: any) => (
+            <TouchableOpacity 
+              key={match.id}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-4"
+              onPress={() => router.push({ pathname: '/chat', params: { query: `${match.home} vs ${match.away}` } })}
+            >
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-zinc-400 text-xs font-bold uppercase">{match.sport} • {match.tournament}</Text>
+                <Text className="text-zinc-500 text-xs">{new Date(match.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+              </View>
+              <Text className="text-white font-bold">{match.home} vs {match.away}</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text className="text-zinc-500">No upcoming matches available right now.</Text>
         )}
       </View>
     </ScrollView>
